@@ -24,6 +24,9 @@ jobs:
         run: |
           pip install uv
 
+      - name: Create virtual environment with uv
+        run: uv venv
+
       # NEW STEP: Cache uv's global cache directory
       - name: Cache UV dependencies
         uses: actions/cache@v3 # Use v3 or v4
