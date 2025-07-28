@@ -48,22 +48,22 @@ This checklist reflects your preferred uv init first, followed by GitHub repo cr
     *   Do NOT initialize with a README or license on GitHub yet, as uv init already set up your local project structure.
     *   Follow the instructions provided by GitHub for "push an existing repository from the command line":
         *   Make an initial commit:
-            
+
             git add .
             git commit -m "feat: Initial project structure with uv init"
-            
+
         *   Connect to remote:
-            
+
             git remote add origin https://github.com/<your-username>/my-awesome-project-template.git
             git branch -M main # Renames your default branch to 'main'
             git push -u origin main
-            
+
     *   *Rationale:* This sets up version control and remote collaboration early.
 
 5.  Define Project Dependencies (Application & Development):
     *   Open the pyproject.toml file that uv init created.
     *   Core Application Dependencies: If you have any initial production dependencies, add them under [project.dependencies].
-        
+
         # pyproject.toml
         [project]
         name = "my_awesome_project"
@@ -73,9 +73,9 @@ This checklist reflects your preferred uv init first, followed by GitHub repo cr
             "requests~=2.31",
             "fastapi~=0.104",
         ]
-        
+
     *   Development Dependencies: Add a [project.optional-dependencies.dev] section for linters, formatters, and testing frameworks.
-        
+
         # pyproject.toml (continued)
         [project.optional-dependencies]
         dev = [
@@ -84,7 +84,7 @@ This checklist reflects your preferred uv init first, followed by GitHub repo cr
             "pre-commit~=3.6",    # Git Hooks
             "pytest~=7.4",        # Testing Framework
         ]
-        
+
     *   Install Development Dependencies:
         *   uv pip install -e ".[dev]" (This installs your current project in editable mode and all packages listed under dev optional dependencies).
     *   *Rationale:* pyproject.toml is the modern single source of truth for dependencies. UV efficiently installs these defined groups.
@@ -94,7 +94,7 @@ This checklist reflects your preferred uv init first, followed by GitHub repo cr
 6.  Configure Ruff (Linter & Formatter):
     *   Add [tool.ruff] section to your pyproject.toml.
     *   Minimum Recommended Configuration: (As in previous response, feel free to copy)
-        
+
         # pyproject.toml (continued)
         [tool.ruff]
         line-length = 88
@@ -115,13 +115,13 @@ This checklist reflects your preferred uv init first, followed by GitHub repo cr
         quote-style = "double"
         indent-style = "space"
         skip-magic-trailing-comma = false
-        
+
     *   *Rationale:* Ruff is a single, fast tool for both linting and formatting.
 
 7.  Configure Mypy (Type Checker):
     *   Add [tool.mypy] section to your pyproject.toml.
     *   Minimum Recommended Configuration: (As in previous response, feel free to copy)
-        
+
         # pyproject.toml (continued)
         [tool.mypy]
         python_version = "3.10" # Match your project's target Python version
@@ -139,12 +139,12 @@ This checklist reflects your preferred uv init first, followed by GitHub repo cr
         [[tool.mypy.overrides]]
         module = "requests.*" # Example: if requests stubs are missing/incomplete
         ignore_missing_imports = true
-        
+
     *   *Rationale:* Mypy ensures type correctness.
 
 8.  (Optional) Add .editorconfig:
     *   Create a .editorconfig file in the root.
-    
+
     # .editorconfig
     root = true
 
@@ -156,7 +156,7 @@ This checklist reflects your preferred uv init first, followed by GitHub repo cr
     [*.py]
     indent_style = space
     indent_size = 4
-    
+
     *   *Rationale:* Ensures consistency across development environments.
 
 ### Phase 3: Workflow Integration (Automation)
@@ -164,7 +164,7 @@ This checklist reflects your preferred uv init first, followed by GitHub repo cr
 9.  Set Up Pre-commit Hooks:
     *   Create a .pre-commit-config.yaml file at the root.
     *   Minimum Recommended Configuration: (As in previous response, feel free to copy)
-        
+
         # .pre-commit-config.yaml
         repos:
           - repo: https://github.com/astral-sh/ruff-pre-commit
@@ -173,12 +173,12 @@ This checklist reflects your preferred uv init first, followed by GitHub repo cr
               - id: ruff
                 args: [--fix, --exit-non-zero-on-fix]
               - id: ruff-format
-        
+
           - repo: https://github.com/pre-commit/mirrors-mypy
             rev: v1.7.1 # Use the latest stable version of Mypy
             hooks:
               - id: mypy
-        
+
           - repo: https://github.com/pre-commit/pre-commit-hooks
             rev: v4.5.0 # Use the latest stable version
             hooks:
@@ -186,14 +186,14 @@ This checklist reflects your preferred uv init first, followed by GitHub repo cr
               - id: end-of-file-fixer
               - id:trailing-whitespace
               - id: debug-statements
-        
+
     *   Install Pre-commit Hooks: pre-commit install
     *   *Rationale:* Catches common issues immediately, preventing them from entering version control.
 
 10. Configure CI/CD Pipeline (e.g., GitHub Actions):
     *   Create a .github/workflows/lint.yml file.
     *   Example GitHub Actions Workflow: (As in previous response, feel free to copy)
-        
+
         # .github/workflows/lint.yml
         name: Lint and Type Check
 
@@ -222,7 +222,7 @@ This checklist reflects your preferred uv init first, followed by GitHub repo cr
               - name: Install Dependencies
                 run: |
                   uv pip install -e ".[dev]"
-                
+
               - name: Run Ruff Linter
                 run: |
                   uv run ruff check .
@@ -234,7 +234,7 @@ This checklist reflects your preferred uv init first, followed by GitHub repo cr
               - name: Run Mypy Type Checker
                 run: |
                   uv run mypy .
-        
+
     *   *Rationale:* Provides a consistent and reliable check for code quality across all contributions.
 
 ### Phase 4: Template Finalization & Documentation
