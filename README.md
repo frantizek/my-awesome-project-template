@@ -1,5 +1,6 @@
 ## Revised Process Flow: Setting Up a Python Project with UV & Linters (Starting with uv init)
 
+```mermaid
 graph TD
     A[Start: New Project Creation] --> B[Run 'uv init <project-name>'];
     B --> C[Change Directory into Project];
@@ -17,7 +18,7 @@ graph TD
     H --> H1[Configuration Files: pyproject.toml, .mypy.ini];
     I --> I1[Pre-commit: .pre-commit-config.yaml];
     J --> J1[CI/CD: GitHub Actions, GitLab CI];
-
+```
 
 ---
 
