@@ -8,37 +8,57 @@ dependencies = []
 
 [project.optional-dependencies]
 dev = [
-    "ruff~=0.1",          # Linter and Formatter
-    "mypy~=1.7",          # Type Checker
-    "pre-commit~=3.6",    # Git Hooks
-    "pytest~=7.4",        # Testing Framework
-    "pytest-cov>=4",
-    "black>=23",
-    "flake8>=6",
+    "ruff>=0.11",            # Linter and Formatter (replaces black, flake8, isort)
+    "mypy>=1.16",            # Type Checker
+    "pre-commit>=4.2",       # Git Hooks
+    "pytest>=8.3",           # Testing Framework
+    "pytest-cov>=6.1",       # Coverage
+    "bandit>=1.8",           # Security Linter
 ]
 
+# ──────────────── RUFF ────────────────
 [tool.ruff]
 line-length = 120
-target-version = "py310" # Set to your project's target Python version
+target-version = "py311"
 
 [tool.ruff.lint]
-select = ["E", "F", "I", "N", "W", "B", "C4", "A", "UP", "PL", "SIM", "PTH", "TID"]
-ignore = [] # Add rules to ignore project-wide if necessary
-
+select = [
+    "E",      # pycodestyle errors
+    "W",      # pycodestyle warnings
+    "F",      # pyflakes
+    "I",      # isort (import sorting)
+    "N",      # pep8-naming
+    "UP",     # pyupgrade
+    "B",      # flake8-bugbear
+    "SIM",    # flake8-simplify
+    "C4",     # flake8-comprehensions
+    "A",      # flake8-builtins
+    "PL",     # pylint
+    "PTH",    # flake8-use-pathlib
+    "TID",    # flake8-tidy-imports
+    "S",      # flake8-bandit (security)
+    "DTZ",    # flake8-datetimez
+    "RUF",    # ruff-specific rules
+]
+ignore = []
 exclude = [".git", "__pycache__", "build", "dist", ".venv"]
 fixable = ["ALL"]
 
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401"]
-"tests/Ⓑ/*.py" = ["S101"]
+"tests/**/*.py" = ["S101"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["my_awesome_project_template"]
 
 [tool.ruff.format]
 quote-style = "double"
 indent-style = "space"
 skip-magic-trailing-comma = false
 
+# ──────────────── MYPY ────────────────
 [tool.mypy]
-python_version = "3.10" # Match your project's target Python version
+python_version = "3.11"
 warn_return_any = true
 warn_unused_configs = true
 warn_unused_ignores = true
@@ -48,14 +68,14 @@ strict_optional = true
 show_error_codes = true
 pretty = true
 explicit_package_bases = true
-
 exclude = ["venv/", "build/", "dist/", ".venv/"]
 
 [[tool.mypy.overrides]]
-module = "requests.*" # Example: if requests stubs are missing/incomplete
+module = "requests.*"
 ignore_missing_imports = true
 
+# ──────────────── PYTEST ────────────────
 [tool.pytest.ini_options]
 pythonpath = ["src"]
 testpaths = ["tests"]
-addopts = "--verbose --cov=project_name --cov-report=term-missing"
+addopts = "-v --tb=short --cov=src --cov-report=term-missing"
