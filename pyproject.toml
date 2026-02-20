@@ -13,7 +13,9 @@ dev = [
     "pre-commit>=4.2",       # Git Hooks
     "pytest>=8.3",           # Testing Framework
     "pytest-cov>=6.1",       # Coverage
-    "bandit>=1.8",           # Security Linter
+    "bandit[toml]>=1.8",     # Security Linter (with toml support)
+    "types-paramiko>=3.5",   # Type stubs for paramiko
+    "types-PyYAML>=6.0",     # Type stubs for PyYAML
 ]
 
 # ──────────────── RUFF ────────────────
@@ -79,3 +81,8 @@ ignore_missing_imports = true
 pythonpath = ["src"]
 testpaths = ["tests"]
 addopts = "-v --tb=short --cov=src --cov-report=term-missing"
+
+# ──────────────── BANDIT ────────────────
+[tool.bandit]
+exclude_dirs = [".venv", "build", "dist"]
+skips = ["B101"]
