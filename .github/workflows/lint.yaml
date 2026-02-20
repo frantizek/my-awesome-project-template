@@ -1,5 +1,5 @@
 # .github/workflows/lint.yaml
-name: Lint and Type Check
+name: Lint, Type Check, Security, and Test
 
 on:
   push:
@@ -8,7 +8,7 @@ on:
     branches: [main, develop]
 
 jobs:
-  lint:
+  quality:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -26,17 +26,27 @@ jobs:
           uv venv
           uv pip install -e ".[dev]"
 
-      - name: Run Ruff Linter
+      # ──────────── Ruff (matches pre-commit) ────────────
+      - name: Ruff Lint
         run: uv run ruff check .
 
-      - name: Run Ruff Formatter Check
+      - name: Ruff Format Check
         run: uv run ruff format --check .
 
-      - name: Run Mypy Type Checker
+      # ──────────── Mypy (matches pre-commit) ────────────
+      - name: Mypy Type Check
         run: uv run mypy .
 
-      - name: Run Bandit Security Check
-        run: uv run bandit -r src/
+      # ──────────── Bandit (matches pre-commit, reads pyproject.toml) ────────────
+      - name: Bandit Security Scan
+        run: uv run bandit -r src/ main.py -c pyproject.toml
 
-      - name: Run Tests
+      # ──────────── Tests (CI only) ────────────
+      - name: Pytest
         run: uv run pytest
+
+      # ──────────── Gitleaks (matches pre-commit) ────────────
+      - name: Gitleaks Secret Scan
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
