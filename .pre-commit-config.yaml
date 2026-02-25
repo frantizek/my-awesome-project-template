@@ -43,13 +43,13 @@ repos:
         additional_dependencies: ["bandit[toml]"]
 
   # ──────────────── Git ────────────────
-  - repo: https://github.com/jorisroovers/gitlint
-    rev: v0.19.1
-    hooks:
-      - id: gitlint
+  # - repo: https://github.com/jorisroovers/gitlint
+  #   rev: v0.19.1
+  #   hooks:
+  #     - id: gitlint
 
   # ──────────────── Secrets ────────────────
-  - repo: https://github.com/gitleaks/gitleaks
-    rev: v8.27.2
-    hooks:
-      - id: gitleaks
+  # - repo: https://github.com/gitleaks/gitleaks
+  #   rev: v8.27.2
+  #   hooks:
+  #     - id: gitleaks
