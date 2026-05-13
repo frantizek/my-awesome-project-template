@@ -1,6 +1,5 @@
-# Generate coverage report and comment on PRs
-# Purpose: Track test coverage trends, identify uncovered code
-# Key Concepts: Coverage reports, PR comments, artifact uploads
+# Coverage Report - Track test coverage from pytest
+# Aligns with: pyproject.toml [tool.pytest.ini_options]
 
 name: Coverage Report
 
@@ -30,12 +29,12 @@ jobs:
         with:
           python-version-file: '.python-version'
 
-      - name: Install dependencies
+      - name: Install dev dependencies
         run: |
           uv venv
           uv pip install -e ".[dev]"
 
-      # Run tests with coverage
+      # Run with exact pytest config from pyproject.toml
       - name: Generate coverage report
         run: |
           uv run pytest \
@@ -44,24 +43,20 @@ jobs:
             --cov-report=term-missing \
             --cov-report=html
 
-      # Upload coverage HTML for artifact
       - name: Upload coverage HTML
         uses: actions/upload-artifact@v7
         with:
           name: coverage-report-html
           path: htmlcov/
 
-      # Comment on PR with coverage summary
       - name: Comment coverage on PR
         if: github.event_name == 'pull_request'
         uses: actions/github-script@v7
         with:
           script: |
-            // Read coverage.xml and extract percentage
             const fs = require('fs');
             const xml = fs.readFileSync('coverage.xml', 'utf8');
 
-            // Extract coverage percentage using regex
             const match = xml.match(/line-rate="([^"]+)"/);
             const coverage = match ? (parseFloat(match[1]) * 100).toFixed(2) : 'unknown';
 
@@ -69,7 +64,7 @@ jobs:
 
             **Line Coverage: ${coverage}%**
 
-            [View detailed coverage report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            [View detailed coverage](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
             `;
 
             github.rest.issues.createComment({

@@ -1,12 +1,10 @@
-# Check for outdated and vulnerable dependencies
-# Triggers: Weekly schedule, manual trigger
-# Purpose: Keep dependencies secure and up to date
+# Dependency Check - Weekly security and outdated package scan
+# Aligns with: pyproject.toml [project.optional-dependencies.dev]
 
 name: Dependency Check
 
 on:
   schedule:
-    # Run weekly on Monday morning
     - cron: '0 10 * * 1'
   workflow_dispatch:
 
@@ -29,45 +27,17 @@ jobs:
         with:
           python-version-file: '.python-version'
 
-      - name: Install dependencies
+      - name: Install dev dependencies
         run: |
           uv venv
           uv pip install -e ".[dev]"
 
-      # Run uv audit (checks against OSV database)
-      - name: Audit dependencies with uv
+      - name: Audit dependencies
         run: |
           echo "=== Checking for vulnerable dependencies ==="
           uv audit || true
 
-      # Run pip-audit (alternative/additional check)
-      - name: Audit with pip-audit
-        run: |
-          echo "=== Running pip-audit ==="
-          uv pip install pip-audit
-          uv run pip-audit || true
-
-      # Check for outdated packages
       - name: Check for outdated packages
         run: |
           echo "=== Checking for outdated packages ==="
           uv pip list --outdated || true
-
-  # Optional: Create issues for security vulnerabilities
-  report:
-    needs: audit
-    runs-on: ubuntu-latest
-    if: failure()
-
-    steps:
-      - name: Create issue for vulnerabilities
-        uses: actions/github-script@v7
-        with:
-          script: |
-            github.rest.issues.create({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              title: '🔒 Security: Vulnerable dependencies detected',
-              body: 'Dependency scan found vulnerabilities. Check the workflow run for details.',
-              labels: ['security', 'dependencies']
-            })

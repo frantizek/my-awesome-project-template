@@ -1,7 +1,5 @@
-# Build and publish to PyPI
-# Triggers: On release creation
-# Purpose: Automate package publishing to PyPI
-# Key Concepts: Build distribution, PyPI publishing, OIDC, releases
+# Build & Publish - Create distributions and publish to PyPI
+# Aligns with: pyproject.toml [project] and [tool.hatch.build]
 
 name: Build & Publish
 
@@ -15,9 +13,7 @@ on:
         required: true
         default: "false"
         type: choice
-        options:
-          - "true"
-          - "false"
+        options: ["true", "false"]
 
 permissions:
   contents: read
@@ -28,14 +24,13 @@ jobs:
     runs-on: ubuntu-latest
 
     outputs:
-      # Export artifact names for next job
       dist-files: ${{ steps.build.outputs.files }}
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
         with:
-          fetch-depth: 0  # Full history for versioning
+          fetch-depth: 0
 
       - name: Install uv
         uses: astral-sh/setup-uv@v7
@@ -45,27 +40,25 @@ jobs:
         with:
           python-version-file: '.python-version'
 
-      - name: Install dependencies
+      - name: Install dev dependencies
         run: |
           uv venv
           uv pip install -e ".[dev]"
 
-      # Build the distribution (wheel and source tarball)
+      # Build using pyproject.toml config
       - name: Build distribution
         id: build
         run: |
-          echo "Building Python distribution packages..."
+          echo "Building distributions..."
           uv run pip install build
           uv run python -m build
 
           echo "=== Built distributions ==="
           ls -lh dist/
 
-          # Export filenames
           FILES=$(ls -1 dist/)
           echo "files=$FILES" >> $GITHUB_OUTPUT
 
-      # Upload artifacts for inspection
       - name: Upload build artifacts
         uses: actions/upload-artifact@v7
         with:
@@ -73,7 +66,6 @@ jobs:
           path: dist/
           if-no-files-found: error
 
-  # Publish job (runs after build succeeds)
   publish:
     name: Publish to PyPI
     if: |
@@ -85,7 +77,6 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
 
-    # Permissions for PyPI publishing via OIDC
     permissions:
       id-token: write
       contents: read
@@ -102,7 +93,6 @@ jobs:
           echo "=== Validating distributions ==="
           ls -lh dist/
 
-          # Ensure we have 2 files: source + wheel
           FILE_COUNT=$(ls dist/ | wc -l)
           if [ "$FILE_COUNT" -ne 2 ]; then
             echo "❌ Expected 2 files, found $FILE_COUNT"
@@ -110,13 +100,11 @@ jobs:
           fi
           echo "✅ Distributions validated"
 
-      # Publish to PyPI using OIDC (secure, no stored credentials)
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           repository-url: https://upload.pypi.org/legacy/
 
-      # Create GitHub Release with built artifacts
       - name: Upload to GitHub Release
         if: github.event_name == 'release'
         uses: softprops/action-gh-release@v1
@@ -124,7 +112,7 @@ jobs:
           files: dist/*
           generate_release_notes: true
 
-      - name: Success
+      - name: Success summary
         run: |
-          echo "✅ Package published to PyPI!"
-          echo "📦 View on PyPI: https://pypi.org/project/${{ github.event.repository.name }}/"
+          echo "✅ Published to PyPI!"
+          echo "📦 https://pypi.org/project/${{ github.event.repository.name }}/"
