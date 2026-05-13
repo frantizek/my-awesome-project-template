@@ -31,7 +31,7 @@ jobs:
 
       # Install uv (modern Python package manager, 10-100x faster than pip)
       - name: Install uv
-        uses: astral-sh/setup-uv@v6
+        uses: astral-sh/setup-uv@v7
 
       # Set up Python using version from .python-version file
       # This ensures consistency with local development
