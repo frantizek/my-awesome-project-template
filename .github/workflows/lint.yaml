@@ -119,7 +119,7 @@ jobs:
       # Requires: codecov token (can use GITHUB_TOKEN for public repos)
       - name: Upload Coverage to Codecov
         if: always()
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v6
         with:
           file: ./coverage.xml
           flags: unittests
