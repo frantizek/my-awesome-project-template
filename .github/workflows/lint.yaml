@@ -36,7 +36,7 @@ jobs:
       # Set up Python using version from .python-version file
       # This ensures consistency with local development
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version-file: '.python-version'
 
