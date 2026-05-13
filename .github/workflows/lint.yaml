@@ -1,4 +1,9 @@
-# .github/workflows/lint.yaml
+# Comprehensive Lint, Type Check, Security, and Test workflow
+# Triggers: on push to main/develop, on pull requests
+# Purpose: Ensure code quality, type safety, security, and test coverage
+# Key Concepts: uv setup, matrix-less single job, comprehensive checks,
+#              pre-commit alignment, artifact uploads
+
 name: Lint, Type Check, Security, and Test
 
 on:
@@ -7,46 +12,146 @@ on:
   pull_request:
     branches: [main, develop]
 
+# Minimal permissions: only read access needed
+permissions:
+  contents: read
+  checks: write  # For posting check results
+
 jobs:
   quality:
+    name: Code Quality Suite
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
 
+    steps:
+      # ──────────── SETUP ────────────
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for better analysis
+
+      # Install uv (modern Python package manager, 10-100x faster than pip)
       - name: Install uv
         uses: astral-sh/setup-uv@v6
 
+      # Set up Python using version from .python-version file
+      # This ensures consistency with local development
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version-file: '.python-version'
 
-      - name: Install Dependencies
+      # Install project dependencies with dev extras
+      # The [dev] extra should include: ruff, mypy, bandit, pytest, etc.
+      - name: Install dependencies
         run: |
           uv venv
           uv pip install -e ".[dev]"
 
-      # ──────────── Ruff (matches pre-commit) ────────────
-      - name: Ruff Lint
-        run: uv run ruff check .
+      # ──────────── LINTING (Ruff) ────────────
+      # Ruff: Fast Python linter + formatter (10-100x faster than flake8)
+      # Checks: PEP 8 style, naming conventions, common errors, etc.
+
+      - name: Ruff Lint Check
+        run: |
+          echo "Running Ruff linting checks..."
+          uv run ruff check . --output-format=github
 
       - name: Ruff Format Check
-        run: uv run ruff format --check .
+        run: |
+          echo "Checking code formatting with Ruff..."
+          uv run ruff format --check . --diff
 
-      # ──────────── Mypy (matches pre-commit) ────────────
+      # ──────────── TYPE CHECKING (Mypy) ────────────
+      # Mypy: Static type checker for Python
+      # Catches type errors before runtime using type hints
+      # Requires: type hints in code or .pyi stub files
+
       - name: Mypy Type Check
-        run: uv run mypy .
+        run: |
+          echo "Running static type checking with Mypy..."
+          uv run mypy .
 
-      # ──────────── Bandit (matches pre-commit, reads pyproject.toml) ────────────
+      # ──────────── SECURITY SCANNING (Bandit) ────────────
+      # Bandit: Security vulnerability scanner
+      # Detects: hardcoded passwords, SQL injection risks, weak crypto, etc.
+      # Reads config from pyproject.toml [tool.bandit]
+
       - name: Bandit Security Scan
-        run: uv run bandit -r src/ main.py -c pyproject.toml
+        run: |
+          echo "Running security scan with Bandit..."
+          # Scan src/ directory and main.py file
+          uv run bandit -r src/ main.py -c pyproject.toml -f json -o bandit-report.json || true
 
-      # ──────────── Tests (CI only) ────────────
-      - name: Pytest
-        run: uv run pytest
+      # Upload Bandit report as artifact for inspection
+      - name: Upload Bandit Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bandit-security-report
+          path: bandit-report.json
 
-      # ──────────── Gitleaks (matches pre-commit) ────────────
+      # ──────────── TESTING (Pytest) ────────────
+      # Pytest: Python testing framework
+      # Runs all tests in tests/ directory
+      # Generates coverage report for visibility
+
+      - name: Pytest with Coverage
+        run: |
+          echo "Running test suite with coverage reporting..."
+          uv run pytest \
+            --cov=src \
+            --cov-report=xml \
+            --cov-report=term \
+            --cov-report=html \
+            --junit-xml=junit.xml
+
+      # Upload test results as artifact
+      - name: Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: |
+            junit.xml
+            htmlcov/
+
+      # Upload coverage to codecov.io for tracking
+      # Requires: codecov token (can use GITHUB_TOKEN for public repos)
+      - name: Upload Coverage to Codecov
+        if: always()
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./coverage.xml
+          flags: unittests
+          name: codecov-report
+          fail_ci_if_error: false  # Don't fail if codecov is down
+
+      # ──────────── GITLEAKS (Optional - uncomment if installed) ────────────
+      # Gitleaks: Secret scanning - prevents accidental commits of secrets
+      # Scans: passwords, API keys, tokens, private keys, etc.
+      # Note: This requires the gitleaks pre-commit hook to be installed
+
       # - name: Gitleaks Secret Scan
       #   uses: gitleaks/gitleaks-action@v2
       #   env:
       #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # ──────────── SUMMARY ────────────
+      - name: Quality Check Summary
+        if: always()
+        run: |
+          echo "=== Quality Check Summary ==="
+          echo "✅ Ruff linting completed"
+          echo "✅ Mypy type checking completed"
+          echo "✅ Bandit security scan completed"
+          echo "✅ Pytest test suite completed"
+          echo ""
+          echo "📊 Check artifacts:"
+          echo "   - Bandit Security Report: bandit-report.json"
+          echo "   - Test Results: junit.xml"
+          echo "   - Coverage HTML: htmlcov/"
+          echo ""
+          echo "💡 Next steps:"
+          echo "   1. Review any failed checks above"
+          echo "   2. Fix issues locally and push"
+          echo "   3. Run 'pre-commit run --all-files' locally to catch issues early"

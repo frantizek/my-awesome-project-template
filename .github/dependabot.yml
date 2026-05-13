@@ -1,0 +1,49 @@
+# Dependabot: Automated dependency updates
+# Creates PRs automatically when updates available
+
+version: 2
+
+updates:
+  # GitHub Actions updates
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "chore(deps): "
+
+    labels:
+      - "dependencies"
+      - "github-actions"
+
+    reviewers:
+      - "frantizek"
+
+  # Python dependencies (via pyproject.toml)
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "wednesday"
+      time: "09:00"
+
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: "chore(deps): "
+
+    labels:
+      - "dependencies"
+
+    reviewers:
+      - "frantizek"
+
+    # Group updates to reduce PR spam
+    groups:
+      development:
+        dependency-type: "development"
+      production:
+        dependency-type: "production"

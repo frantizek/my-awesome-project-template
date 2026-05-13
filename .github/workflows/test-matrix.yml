@@ -1,0 +1,78 @@
+# Test across multiple Python versions
+# Purpose: Ensure code works on Python 3.9-3.13
+# Key Concepts: Matrix strategy, parallel jobs, version compatibility
+
+name: Test Matrix
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  # Allow manual trigger for testing
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Test Python ${{ matrix.python-version }}
+    runs-on: ubuntu-latest
+
+    # Matrix strategy: Run tests on multiple Python versions in parallel
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+      # Don't cancel other versions if one fails
+      fail-fast: false
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+
+      # Use matrix variable for Python version
+      - name: Set up Python ${{ matrix.python-version }}
+        run: |
+          uv python install ${{ matrix.python-version }}
+          # Create venv with specific Python version
+          uv venv --python ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: |
+          uv pip install -e ".[dev]"
+
+      # Run tests for this Python version
+      - name: Run tests
+        run: |
+          uv run pytest \
+            --cov=src \
+            --cov-report=term \
+            -v
+
+      # Report which versions passed/failed
+      - name: Report Results
+        if: always()
+        run: |
+          echo "✅ Python ${{ matrix.python-version }} tests completed"
+
+  # Summary job that waits for all matrix jobs
+  test-summary:
+    name: Test Matrix Results
+    needs: test
+    runs-on: ubuntu-latest
+    if: always()
+
+    steps:
+      - name: Check Test Results
+        run: |
+          echo "=== Test Matrix Summary ==="
+          if [ "${{ needs.test.result }}" == "success" ]; then
+            echo "✅ All Python versions passed!"
+          else
+            echo "❌ Some Python versions failed"
+            exit 1
+          fi
