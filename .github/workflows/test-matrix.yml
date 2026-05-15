@@ -31,8 +31,6 @@ jobs:
 
       - name: Install uv
         uses: astral-sh/setup-uv@v7
-        with:
-          enable-cache: true
 
       - name: Set up Python ${{ matrix.python-version }}
         run: |
@@ -43,7 +41,6 @@ jobs:
         run: |
           uv pip install -e ".[dev]"
 
-      # Run pytest with exact config from pyproject.toml
       - name: Run tests
         run: |
           uv run pytest \
