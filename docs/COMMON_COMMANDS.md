@@ -67,14 +67,14 @@ A quick reference for all CLI commands used in this project.
 
 ## Bandit (Security Scanner)
 
-| Command                                         | Description                |
-| ----------------------------------------------- | -------------------------- |
-| uv run bandit -r src/                           | Scan src/ directory        |
-| uv run bandit -r src/ main.py -c pyproject.toml | Scan with config file      |
-| uv run bandit -r src/ -ll                       | Show only medium+ severity |
-| uv run bandit -r src/ -lll                      | Show only high severity    |
-| uv run bandit -r src/ -f json                   | Output as JSON             |
-| uv run bandit --version                         | Show bandit version        |
+| Command                               | Description                |
+| ------------------------------------- | -------------------------- |
+| uv run bandit -r src/                 | Scan src/ directory        |
+| uv run bandit -r src/ -c pyproject.toml | Scan with config file      |
+| uv run bandit -r src/ -ll             | Show only medium+ severity |
+| uv run bandit -r src/ -lll            | Show only high severity    |
+| uv run bandit -r src/ -f json          | Output as JSON             |
+| uv run bandit --version               | Show bandit version        |
 
 ## Pytest (Testing)
 
@@ -97,6 +97,8 @@ A quick reference for all CLI commands used in this project.
 | uv run pytest --cov=src                           | Run with coverage             |
 | uv run pytest --cov=src --cov-report=term-missing | Show missing lines            |
 | uv run pytest --cov=src --cov-report=html         | Generate HTML coverage report |
+
+**Note:** 100% coverage is required. Add `--cov-fail-under=100` to fail if coverage drops below 100%.
 
 ## Pre-commit (Git Hooks)
 

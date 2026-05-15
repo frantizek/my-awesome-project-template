@@ -21,21 +21,28 @@ A modern Python project template using **UV** for package management, **Ruff** f
 
 ## 📁 Project Structure
 
-The project follows this layout:
-
     my-awesome-project-template/
-    ├── .github/workflows/lint.yaml    CI/CD pipeline
-    ├── .vscode/settings.json          VS Code workspace settings
-    ├── .vscode/extensions.json        Recommended extensions
-    ├── .vscode/launch.json            Debug configurations
-    ├── src/__init__.py                Source package
-    ├── tests/__init__.py
-    ├── tests/test_main.py             Test files
+    ├── .github/workflows/             CI/CD workflows
+    │   ├── lint.yaml                  Lint, type check, security & test
+    │   ├── test-matrix.yml            Multi-Python version tests
+    │   ├── coverage-report.yml        Coverage reports
+    │   ├── build-and-publish.yml      Package build & publish
+    │   ├── pre-commit-check.yml       Pre-commit validation
+    │   └── dependency-check.yml       Dependency auditing
+    ├── src/
+    │   ├── __init__.py
+    │   └── my_awesome_project_template/
+    │       ├── __init__.py
+    │       ├── main.py                 Entry point
+    │       └── py.typed                Mypy marker
+    ├── tests/
+    │   ├── __init__.py
+    │   └── test_main.py               Test files
+    ├── docs/                          Documentation
     ├── .editorconfig                  Cross-IDE formatting rules
     ├── .gitignore                     Git ignore rules
     ├── .pre-commit-config.yaml        Pre-commit hook definitions
     ├── .python-version                Python version (read by UV and CI)
-    ├── main.py                        Entry point
     ├── pyproject.toml                 Project config and tool settings
     ├── uv.lock                        UV dependency lock file
     └── README.md
@@ -43,11 +50,11 @@ The project follows this layout:
 ## ⚡ Quick Start
 
 1. Clone the template
-2. Run uv venv to create virtual environment
-3. Run uv pip install -e ".[dev]" to install dependencies
-4. Run pre-commit install to set up hooks
-5. Run pre-commit install --hook-type commit-msg for commit message linting
-6. Run uv run python main.py to verify
+2. Run `uv venv` to create virtual environment
+3. Run `uv pip install -e ".[dev]"` to install dependencies
+4. Run `pre-commit install` to set up hooks
+5. Run `pre-commit install --hook-type commit-msg` for commit message linting
+6. Run `uv run python -m my_awesome_project_template.main` to verify
 
 ## 🔧 Setup Guide
 
@@ -71,9 +78,9 @@ All tool configuration lives in **pyproject.toml** — no separate config files 
 
 7. **Ruff** (Linter + Formatter — replaces Black, Flake8, isort) — Configure line-length, target-version, lint rules, format settings, and per-file ignores in the [tool.ruff] sections of pyproject.toml.
 
-8. **Mypy** (Type Checker) — Configure python_version, strict settings, and import overrides in [tool.mypy] section of pyproject.toml.
+8. **Mypy** (Type Checker) — Configure python_version, strict settings, and import overrides in [tool.mypy] section of pyproject.toml. The package includes `py.typed` marker for proper type checking.
 
-9. **Pytest** (Testing) — Configure pythonpath, testpaths, and addopts in [tool.pytest.ini_options] section of pyproject.toml.
+9. **Pytest** (Testing) — Configure pythonpath, testpaths, addopts, and coverage requirements in [tool.pytest.ini_options] section. **100% coverage is required** (`--cov-fail-under=100`).
 
 10. **EditorConfig** (Cross-IDE consistency) — The `.editorconfig` file ensures consistent formatting across VS Code, PyCharm, and other IDEs.
 
@@ -129,17 +136,18 @@ All tool configuration lives in **pyproject.toml** — no separate config files 
 
 12. **CI/CD Pipeline**
 
-    `.github/workflows/lint.yaml` runs on every push/PR to main and develop:
+    Multiple workflows run on every push/PR to main and develop:
 
-      ✅ Ruff linting
+    | Workflow | Purpose |
+    | -------- | ------- |
+    | `lint.yaml` | Ruff lint + format, Mypy type check, Bandit security, Pytest |
+    | `test-matrix.yml` | Test on Python 3.11, 3.12, 3.13 |
+    | `coverage-report.yml` | Generate and upload coverage reports |
+    | `pre-commit-check.yml` | Run pre-commit hooks in CI |
+    | `dependency-check.yml` | Audit dependencies weekly |
+    | `build-and-publish.yml` | Build and publish to PyPI |
 
-      ✅ Ruff format check
-
-      ✅ Mypy type checking
-
-      ✅ Bandit security scan
-
-      ✅ Pytest tests
+    **Required: 100% test coverage** — Pipeline fails if coverage drops below 100%.
 
 
 
@@ -148,20 +156,15 @@ All tool configuration lives in **pyproject.toml** — no separate config files 
 
 ### VS Code
 
-The `.vscode/` folder provides:
+Recommended extensions:
 
-| File            | Purpose                                              |
-| --------------- | ---------------------------------------------------- |
-| settings.json   | Auto-format on save, Ruff integration, pytest config |
-| extensions.json | Recommended extensions for collaborators             |
-| launch.json     | Debug configurations (current file, main.py, pytest) |
+- Python + Pylance
+- Ruff
+- Python Debugger
+- Mypy Type Checker
+- GitHub Copilot Chat
 
-**Recommended Extensions:**
-+ Python + Pylance
-+ Ruff,
-+ Python Debugger,
-+ Mypy Type Checker,
-+ GitHub Copilot Chat
+VS Code reads tool configs from `pyproject.toml`. Use `uv run` commands in terminal for full toolchain.
 
 ### PyCharm
 
@@ -178,42 +181,42 @@ The `.vscode/` folder provides:
 
 ```bash
 
-──────────────── Environment ────────────────
+──────────────── Environment ───────────────────
 uv venv # Create virtual environment
 uv pip install -e ".[dev]" # Install all dev dependencies
-uv run python main.py # Run the project
+uv run python -m my_awesome_project_template.main # Run the project
 
-──────────────── Linting & Formatting ────────────────
+──────────────── Linting & Formatting ───────────────────
 uv run ruff check . # Run linter
 uv run ruff check . --fix # Run linter with auto-fix
 uv run ruff format . # Format code
 uv run ruff format --check . # Check formatting (no changes)
 
-──────────────── Type Checking ────────────────
+──────────────── Type Checking ───────────────────
 uv run mypy . # Run type checker
 
-──────────────── Security ────────────────
-uv run bandit -r src/ # Run security scanner
+──────────────── Security ───────────────────
+uv run bandit -r src/ -c pyproject.toml # Run security scanner
 
-──────────────── Testing ────────────────
-uv run pytest # Run tests
-uv run pytest --cov=src # Run tests with coverage
+──────────────── Testing ───────────────────
+uv run pytest # Run tests (fails if coverage < 100%)
+uv run pytest --cov=src --cov-report=term-missing # Run with coverage
 uv run pytest -v --tb=short # Verbose with short traceback
 
-──────────────── Pre-commit ────────────────
+──────────────── Pre-commit ───────────────────
 pre-commit install # Install hooks
 pre-commit install --hook-type commit-msg # Install commit-msg hook
 pre-commit run --all-files # Run all hooks manually
 pre-commit autoupdate # Update hook versions
 
-──────────────── Git ────────────────
+──────────────── Git ───────────────────
 git add .
 git commit -m "feat: your message" # Triggers pre-commit hooks
 git push
 
 
 ```
-Pipeline steps:
+Pipeline steps (100% coverage required):
 
 ```mermaid
 graph LR
