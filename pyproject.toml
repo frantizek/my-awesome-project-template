@@ -69,7 +69,9 @@ no_implicit_optional = true
 strict_optional = true
 show_error_codes = true
 pretty = true
+namespace_packages = true
 explicit_package_bases = true
+mypy_path = "src"
 exclude = ["venv/", "build/", "dist/", ".venv/"]
 
 [[tool.mypy.overrides]]
