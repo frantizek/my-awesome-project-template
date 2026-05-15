@@ -61,11 +61,10 @@ Then add these additional entries at the end:
 
 If you cloned this template repository:
 
-    cp -r /path/to/my-awesome-project-template/.vscode .
     cp -r /path/to/my-awesome-project-template/.github .
-    cp /path/to/my-awesome-project-template/.editorconfig .
-    cp /path/to/my-awesome-project-template/.pre-commit-config.yaml .
-    cp /path/to/my-awesome-project-template/.gitattributes .
+    cp -r /path/to/my-awesome-project-template/.editorconfig .
+    cp -r /path/to/my-awesome-project-template/.pre-commit-config.yaml .
+    cp -r /path/to/my-awesome-project-template/.gitattributes .
 
 ### Step 6: Connect to GitHub
 
@@ -124,8 +123,10 @@ Verify hooks work:
 
 ### Step 10: Create Source and Test Directories
 
-    mkdir -p src tests
+    mkdir -p src/my_awesome_project_template tests
     touch src/__init__.py
+    touch src/my_awesome_project_template/__init__.py
+    touch src/my_awesome_project_template/main.py
     touch tests/__init__.py
     touch tests/test_main.py
 
@@ -133,7 +134,7 @@ Verify hooks work:
 
 In tests/test_main.py:
 
-    from main import main
+    from my_awesome_project_template.main import main
 
 
     def test_main(capsys: object) -> None:
@@ -156,8 +157,10 @@ This sets up all project labels automatically. See docs/GITHUB_LABELS.md for det
     uv run ruff check .
     uv run ruff format --check .
     uv run mypy .
-    uv run bandit -r src/ main.py -c pyproject.toml
-    uv run pytest
+    uv run bandit -r src/ -c pyproject.toml
+    uv run pytest --cov=src --cov-fail-under=100
+
+**Note:** 100% test coverage is required. The `--cov-fail-under=100` flag ensures the pipeline fails if coverage drops below 100%.
 
 ### Step 14: Make a Test Commit
 
@@ -175,16 +178,16 @@ For those who want the short version:
     cd my-project
     git init
     curl -o .gitignore https://raw.githubusercontent.com/github/gitignore/main/Python.gitignore
-    cp -r /path/to/template/.vscode .
     cp -r /path/to/template/.github .
-    cp /path/to/template/.editorconfig .
-    cp /path/to/template/.pre-commit-config.yaml .
-    cp /path/to/template/.gitattributes .
+    cp -r /path/to/template/.editorconfig .
+    cp -r /path/to/template/.pre-commit-config.yaml .
+    cp -r /path/to/template/.gitattributes .
     uv pip install -e ".[dev]"
     pre-commit install
     pre-commit install --hook-type commit-msg
-    mkdir -p src tests
-    touch src/__init__.py tests/__init__.py tests/test_main.py
+    mkdir -p src/my_awesome_project_template tests
+    touch src/__init__.py src/my_awesome_project_template/__init__.py
+    touch src/my_awesome_project_template/main.py tests/__init__.py tests/test_main.py
     git add .
     git commit -m "feat: initial project setup"
     git remote add origin https://github.com/<user>/my-project.git
