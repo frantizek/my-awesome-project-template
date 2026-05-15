@@ -1,0 +1,36 @@
+# Pre-commit Check - Run exact same hooks as local .pre-commit-config.yaml
+# Purpose: Ensure CI matches local dev environment
+# Benefit: Catch issues that pre-commit would catch locally
+
+name: Pre-commit Checks
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+permissions:
+  contents: read
+
+jobs:
+  pre-commit:
+    name: Pre-commit Hooks
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version-file: '.python-version'
+
+      # Run pre-commit exactly as it runs locally
+      - name: Run pre-commit hooks
+        uses: pre-commit/action@v3.0.0
+        with:
+          # pre-commit will read .pre-commit-config.yaml
+          # and run all hooks configured there
+          extra_args: --all-files --verbose

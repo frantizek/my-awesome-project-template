@@ -1,6 +1,6 @@
-# Test across multiple Python versions
-# Purpose: Ensure code works on Python 3.9-3.13
-# Key Concepts: Matrix strategy, parallel jobs, version compatibility
+# Test Matrix - Test across multiple Python versions
+# Aligns with: pyproject.toml requires-python = ">=3.11"
+# Purpose: Verify code works on Python 3.11+
 
 name: Test Matrix
 
@@ -9,7 +9,6 @@ on:
     branches: [main, develop]
   pull_request:
     branches: [main, develop]
-  # Allow manual trigger for testing
   workflow_dispatch:
 
 permissions:
@@ -20,11 +19,10 @@ jobs:
     name: Test Python ${{ matrix.python-version }}
     runs-on: ubuntu-latest
 
-    # Matrix strategy: Run tests on multiple Python versions in parallel
     strategy:
       matrix:
-        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
-      # Don't cancel other versions if one fails
+        # Test on all Python versions >= 3.11
+        python-version: ["3.11", "3.12", "3.13"]
       fail-fast: false
 
     steps:
@@ -34,32 +32,23 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v7
 
-      # Use matrix variable for Python version
       - name: Set up Python ${{ matrix.python-version }}
-        run: |
-          uv python install ${{ matrix.python-version }}
-          # Create venv with specific Python version
-          uv venv --python ${{ matrix.python-version }}
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
 
-      - name: Install dependencies
+      - name: Install dev dependencies
         run: |
+          uv venv
           uv pip install -e ".[dev]"
 
-      # Run tests for this Python version
       - name: Run tests
         run: |
           uv run pytest \
             --cov=src \
-            --cov-report=term \
+            --cov-report=term-missing \
             -v
 
-      # Report which versions passed/failed
-      - name: Report Results
-        if: always()
-        run: |
-          echo "✅ Python ${{ matrix.python-version }} tests completed"
-
-  # Summary job that waits for all matrix jobs
   test-summary:
     name: Test Matrix Results
     needs: test
@@ -67,12 +56,11 @@ jobs:
     if: always()
 
     steps:
-      - name: Check Test Results
+      - name: Check results
         run: |
-          echo "=== Test Matrix Summary ==="
           if [ "${{ needs.test.result }}" == "success" ]; then
-            echo "✅ All Python versions passed!"
+            echo "✅ All Python 3.11+ versions passed!"
           else
-            echo "❌ Some Python versions failed"
+            echo "❌ Some versions failed"
             exit 1
           fi

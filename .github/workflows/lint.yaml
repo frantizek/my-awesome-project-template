@@ -1,8 +1,7 @@
-# Comprehensive Lint, Type Check, Security, and Test workflow
-# Triggers: on push to main/develop, on pull requests
-# Purpose: Ensure code quality, type safety, security, and test coverage
-# Key Concepts: uv setup, matrix-less single job, comprehensive checks,
-#              pre-commit alignment, artifact uploads
+# Main CI Workflow - Aligns with pyproject.toml and .pre-commit-config.yaml
+# Purpose: Run all quality checks on push and PR
+# Triggers: push to main/develop, pull requests to main/develop
+# Key: Uses exact tool versions from pyproject.toml [project.optional-dependencies.dev]
 
 name: Lint, Type Check, Security, and Test
 
@@ -12,10 +11,9 @@ on:
   pull_request:
     branches: [main, develop]
 
-# Minimal permissions: only read access needed
 permissions:
   contents: read
-  checks: write  # For posting check results
+  checks: write
 
 jobs:
   quality:
@@ -27,86 +25,78 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
         with:
-          fetch-depth: 0  # Full history for better analysis
+          fetch-depth: 0
 
-      # Install uv (modern Python package manager, 10-100x faster than pip)
       - name: Install uv
         uses: astral-sh/setup-uv@v7
 
-      # Set up Python using version from .python-version file
-      # This ensures consistency with local development
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
           python-version-file: '.python-version'
 
-      # Install project dependencies with dev extras
-      # The [dev] extra should include: ruff, mypy, bandit, pytest, etc.
-      - name: Install dependencies
+      # Install from pyproject.toml [project.optional-dependencies.dev]
+      - name: Install dev dependencies
         run: |
           uv venv
           uv pip install -e ".[dev]"
 
-      # ──────────── LINTING (Ruff) ────────────
-      # Ruff: Fast Python linter + formatter (10-100x faster than flake8)
-      # Checks: PEP 8 style, naming conventions, common errors, etc.
-
-      - name: Ruff Lint Check
+      # ──────────── RUFF ────────────
+      # Config: pyproject.toml [tool.ruff]
+      # - line-length = 120
+      # - target-version = "py311"
+      - name: Ruff lint check
         run: |
-          echo "Running Ruff linting checks..."
+          echo "Ruff lint (line-length=120, target=py311)..."
           uv run ruff check . --output-format=github
 
-      - name: Ruff Format Check
+      - name: Ruff format check
         run: |
-          echo "Checking code formatting with Ruff..."
+          echo "Ruff format check (double quotes, space indent)..."
           uv run ruff format --check . --diff
 
-      # ──────────── TYPE CHECKING (Mypy) ────────────
-      # Mypy: Static type checker for Python
-      # Catches type errors before runtime using type hints
-      # Requires: type hints in code or .pyi stub files
-
-      - name: Mypy Type Check
+      # ──────────── MYPY ────────────
+      # Config: pyproject.toml [tool.mypy]
+      # - python_version = "3.11"
+      # - strict mode: disallow_untyped_defs, warn_unused_ignores, etc.
+      - name: Mypy type check
         run: |
-          echo "Running static type checking with Mypy..."
+          echo "Mypy type check (python 3.11, strict mode)..."
           uv run mypy .
 
-      # ──────────── SECURITY SCANNING (Bandit) ────────────
-      # Bandit: Security vulnerability scanner
-      # Detects: hardcoded passwords, SQL injection risks, weak crypto, etc.
-      # Reads config from pyproject.toml [tool.bandit]
-
-      - name: Bandit Security Scan
+      # ──────────── BANDIT ────────────
+      # Config: pyproject.toml [tool.bandit]
+      # - exclude_dirs = [".venv", "build", "dist"]
+      # - skips = ["B101"]
+      # Also matches: .pre-commit-config.yaml bandit section
+      - name: Bandit security scan
         run: |
-          echo "Running security scan with Bandit..."
-          # Scan src/ directory and main.py file
+          echo "Bandit security scan (reading pyproject.toml config)..."
           uv run bandit -r src/ main.py -c pyproject.toml -f json -o bandit-report.json || true
 
-      # Upload Bandit report as artifact for inspection
-      - name: Upload Bandit Report
+      - name: Upload Bandit report
         if: always()
         uses: actions/upload-artifact@v7
         with:
           name: bandit-security-report
           path: bandit-report.json
 
-      # ──────────── TESTING (Pytest) ────────────
-      # Pytest: Python testing framework
-      # Runs all tests in tests/ directory
-      # Generates coverage report for visibility
-
-      - name: Pytest with Coverage
+      # ──────────── PYTEST ────────────
+      # Config: pyproject.toml [tool.pytest.ini_options]
+      # - pythonpath = ["src"]
+      # - testpaths = ["tests"]
+      # - addopts = "-v --tb=short --cov=src --cov-report=term-missing"
+      - name: Pytest with coverage
         run: |
-          echo "Running test suite with coverage reporting..."
+          echo "Pytest (pythonpath=src, testpaths=tests)..."
           uv run pytest \
             --cov=src \
             --cov-report=xml \
-            --cov-report=term \
+            --cov-report=term-missing \
             --cov-report=html \
             --junit-xml=junit.xml
 
-      # Upload test results as artifact
-      - name: Upload Test Results
+      - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v7
         with:
@@ -115,43 +105,27 @@ jobs:
             junit.xml
             htmlcov/
 
-      # Upload coverage to codecov.io for tracking
-      # Requires: codecov token (can use GITHUB_TOKEN for public repos)
-      - name: Upload Coverage to Codecov
+      - name: Upload coverage to codecov
         if: always()
         uses: codecov/codecov-action@v6
         with:
           file: ./coverage.xml
           flags: unittests
           name: codecov-report
-          fail_ci_if_error: false  # Don't fail if codecov is down
-
-      # ──────────── GITLEAKS (Optional - uncomment if installed) ────────────
-      # Gitleaks: Secret scanning - prevents accidental commits of secrets
-      # Scans: passwords, API keys, tokens, private keys, etc.
-      # Note: This requires the gitleaks pre-commit hook to be installed
-
-      # - name: Gitleaks Secret Scan
-      #   uses: gitleaks/gitleaks-action@v2
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          fail_ci_if_error: false
 
       # ──────────── SUMMARY ────────────
-      - name: Quality Check Summary
+      - name: Quality check summary
         if: always()
         run: |
           echo "=== Quality Check Summary ==="
-          echo "✅ Ruff linting completed"
-          echo "✅ Mypy type checking completed"
-          echo "✅ Bandit security scan completed"
-          echo "✅ Pytest test suite completed"
+          echo "✅ Ruff (line-length=120, target=py311)"
+          echo "✅ Mypy (python=3.11, strict)"
+          echo "✅ Bandit (security scan)"
+          echo "✅ Pytest (src/, tests/)"
           echo ""
-          echo "📊 Check artifacts:"
-          echo "   - Bandit Security Report: bandit-report.json"
-          echo "   - Test Results: junit.xml"
-          echo "   - Coverage HTML: htmlcov/"
-          echo ""
-          echo "💡 Next steps:"
-          echo "   1. Review any failed checks above"
-          echo "   2. Fix issues locally and push"
-          echo "   3. Run 'pre-commit run --all-files' locally to catch issues early"
+          echo "📦 Tool Versions (from pyproject.toml):"
+          uv run ruff --version
+          uv run mypy --version
+          uv run pytest --version
+          uv run bandit --version
